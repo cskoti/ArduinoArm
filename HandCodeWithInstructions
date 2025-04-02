@@ -1,0 +1,62 @@
+// HAND CODE, RECEIVER FINAL?
+#include <SPI.h>
+#include "RF24.h"
+#include <Servo.h>    // Library to control the servo motor
+
+RF24 radio(7, 8); // CE, CSN pins
+const uint64_t pipe = 0xE8E8F0F0E1LL; // Must match the transmitter
+
+int flexValue[3]; // Stores the received flex sensor value
+Servo myServo1;
+Servo myServo2;
+Servo myServo3;
+
+void setup() {
+  Serial.begin(9600);
+  radio.begin();
+  radio.openReadingPipe(1, pipe);
+  radio.startListening();
+  myServo1.attach(9);
+  myServo2.attach(10);
+  myServo3.attach(11);
+}
+
+void loop() {
+  if (radio.available()) { // Check if data is received
+    radio.read(&flexValue, sizeof(flexValue)); // Read the received data
+    
+    Serial.print("Received: ");
+
+    // ONLY CHANGE THE NEXT 4 LINES
+
+    // 0 = Middle finger, 1 = Pointer, 2 = Thumb for the array values (like flexValue[number])
+    Serial.println(flexValue[0]); // This prints the value for one flex sensor at a time, change number based on which one you're calibrating
+/* 
+  for these next three, you only need to worry about the last 4 series of numbers, 
+  so 720, 745, 0, 180 for the top one
+  the 0 and 180 you shouldn't need to change, thats the degrees that the servo will be in between.
+  right now set between 0-180 degrees of movement.
+  the 720, 745 (again using top flexValue as an example), should be the minimum, maximum values the flex sensor displays.
+
+  HOW TO USE:
+  1) Pick a finger, make sure the print function (code above) is set to print values for that finger
+  2) Make sure chosen finger is in neutral position, look at the values printing, set the 720 value to just below what's printing.
+  3) Bend finger to however much is your max flex, record those values and replace the 745.
+  4) Tweak a little based on how that works.
+  5) Move on to next finger.
+
+  NOTE:
+    After you change a number, make sure to re-run the code, it won't fix itself in real time. 
+*/
+  flexValue[0] = map(flexValue[0], 720, 745, 0, 180);
+  flexValue[1] = map(flexValue[1], 740, 755, 0, 180);
+  flexValue[2] = map(flexValue[2], 730, 740, 0, 180);
+  
+  // ONLY EDIT WHAT'S ABOVE THIS
+
+  myServo1.write(flexValue[0]);
+  myServo2.write(flexValue[1]);
+  myServo3.write(flexValue[2]);
+delay(100);
+  }
+}
